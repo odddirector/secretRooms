@@ -18,16 +18,16 @@
       import * as THREE from "three";
       import { MindARThree } from "mindar-image-three";
       import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
-     
-    
+
       const mindarThree = new MindARThree({
         container: document.querySelector("#container"),
         imageTargetSrc: "markers/starbucks_multi.mind",
       });
       const { renderer, scene, camera } = mindarThree;
+      let clock = new THREE.Clock();
       const anchor = mindarThree.addAnchor(0);
 
-      const anchor_2 = mindarThree.addAnchor(1); 
+      const anchor_2 = mindarThree.addAnchor(1);
 
       const geometry = new THREE.PlaneGeometry(1, 0.55);
       const material = new THREE.MeshBasicMaterial({
@@ -37,13 +37,18 @@
       });
       const plane = new THREE.Mesh(geometry, material);
 
-      const url = "models/room_test.gltf";
+      const url = "models/room_animated_2.gltf";
       const gltf = await new Promise((resolve) => {
         const loader = new GLTFLoader();
         loader.load(url, (gltf) => {
           resolve(gltf);
         });
       });
+
+      const mixer = new THREE.AnimationMixer(gltf.scene);
+      console.log(gltf.animations);
+      let action = mixer.clipAction(gltf.animations[0]);
+      action.play();
 
       const cloak_url = "models/room_mask_test.gltf";
       const cloak = await new Promise((resolve) => {
@@ -52,7 +57,6 @@
           resolve(cloak);
         });
       });
-
 
       let mesh = cloak.scene.children[0];
       mesh.traverse(function (node) {
@@ -82,20 +86,19 @@
 
       anchor.group.add(gltf.scene);
 
-
       cloak.scene.scale.set(0.02, 0.02, 0.02);
       //cloak.scene.rotation.set(90, 0, 0);
       cloak.scene.rotation.x = Math.PI / 2;
       anchor.group.add(cloak.scene);
 
-
       model_2.scene.scale.set(0.02, 0.02, 0.02);
       anchor_2.group.add(model_2.scene);
-
 
       const start = async () => {
         await mindarThree.start();
         renderer.setAnimationLoop(() => {
+          var delta = clock.getDelta();
+				  if ( mixer ) mixer.update( delta );
           renderer.render(scene, camera);
         });
       };
