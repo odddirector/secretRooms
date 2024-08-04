@@ -18,12 +18,17 @@
       import * as THREE from "three";
       import { MindARThree } from "mindar-image-three";
       import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+     
+    
       const mindarThree = new MindARThree({
         container: document.querySelector("#container"),
-        imageTargetSrc: "markers/starbucks_2.mind",
+        imageTargetSrc: "markers/starbucks_multi.mind",
       });
       const { renderer, scene, camera } = mindarThree;
       const anchor = mindarThree.addAnchor(0);
+
+      const anchor_2 = mindarThree.addAnchor(1); 
+
       const geometry = new THREE.PlaneGeometry(1, 0.55);
       const material = new THREE.MeshBasicMaterial({
         color: 0x00ffff,
@@ -48,7 +53,7 @@
         });
       });
 
-      console.log(cloak);
+
       let mesh = cloak.scene.children[0];
       mesh.traverse(function (node) {
         // traverse through and apply settings
@@ -57,6 +62,14 @@
           node.material.colorWrite = false;
           node.material.needsUpdate = true;
         }
+      });
+
+      const model_2_url = "models/model_2.gltf";
+      const model_2 = await new Promise((resolve) => {
+        const loader = new GLTFLoader();
+        loader.load(model_2_url, (model_2) => {
+          resolve(model_2);
+        });
       });
 
       //   anchor.group.add(plane);
@@ -74,6 +87,11 @@
       //cloak.scene.rotation.set(90, 0, 0);
       cloak.scene.rotation.x = Math.PI / 2;
       anchor.group.add(cloak.scene);
+
+
+      model_2.scene.scale.set(0.02, 0.02, 0.02);
+      anchor_2.group.add(model_2.scene);
+
 
       const start = async () => {
         await mindarThree.start();
