@@ -54,21 +54,25 @@
         // traverse through and apply settings
         if (node.isMesh && node.material) {
           // make sure the element can be a cloak
-        //   node.material.colorWrite = false;
-        //   node.material.needsUpdate = true;
-        //   node.material.renderOrder = Infinity;
+          node.material.colorWrite = false;
+          node.material.needsUpdate = true;
         }
       });
 
       //   anchor.group.add(plane);
       const light = new THREE.HemisphereLight(0xffffff, 0xbbbbff, 1);
       scene.add(light);
-      gltf.scene.scale.set(0.05, 0.05, 0.05);
-      gltf.scene.rotation.set(90, 0, 0);
+      gltf.scene.scale.set(0.02, 0.02, 0.02);
+      //gltf.scene.rotation.set(90, 0, 0);
+      gltf.scene.rotation.x = Math.PI / 2;
+      gltf.scene.renderOrder = Infinity;
+
       anchor.group.add(gltf.scene);
 
-      cloak.scene.scale.set(0.05, 0.05, 0.05);
-      cloak.scene.rotation.set(90, 0, 0);
+
+      cloak.scene.scale.set(0.02, 0.02, 0.02);
+      //cloak.scene.rotation.set(90, 0, 0);
+      cloak.scene.rotation.x = Math.PI / 2;
       anchor.group.add(cloak.scene);
 
       const start = async () => {
