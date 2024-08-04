@@ -19,11 +19,17 @@
       import { MindARThree } from "mindar-image-three";
       import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 
+      //Create a WebGLRenderer and turn on shadows in the renderer
+
       const mindarThree = new MindARThree({
         container: document.querySelector("#container"),
         imageTargetSrc: "markers/starbucks_multi.mind",
       });
       const { renderer, scene, camera } = mindarThree;
+      
+      renderer.shadowMap.enabled = true;
+      //renderer.shadowMap.type = THREE.PCFSoftShadowMap; // default THREE.PCFShadowMap
+
       let clock = new THREE.Clock();
       const anchor = mindarThree.addAnchor(0);
 
@@ -37,7 +43,7 @@
       });
       const plane = new THREE.Mesh(geometry, material);
 
-      const url = "models/room_animated_2.gltf";
+      const url = "models/room_test_lights.gltf";
       const gltf = await new Promise((resolve) => {
         const loader = new GLTFLoader();
         loader.load(url, (gltf) => {
@@ -45,10 +51,36 @@
         });
       });
 
+      gltf.scene.traverse(function (child) {
+        if (child.isMesh) {
+          child.castShadow = true;
+          child.receiveShadow = true;
+        } else if (child.isPointLight) {
+          child.castShadow = true;
+        }
+      });
+
       const mixer = new THREE.AnimationMixer(gltf.scene);
-      console.log(gltf.animations);
+      console.log(gltf);
       let action = mixer.clipAction(gltf.animations[0]);
       action.play();
+
+      // for (let index = 0; index < gltf.scene.children.length; index++) {
+      //   const element = gltf.scene.children[index];
+      //   if (element.isMesh) {
+      //     element.castShadow = true;
+      //     element.receiveShadow = true;
+      //     // element.traverse(function (node) {
+      //     //   // traverse through and apply settings
+      //     //   if (node.isMesh) {
+      //     //     node.castShadow = true;
+      //     //     node.receiveShadow = true;
+      //     //   }
+      //     // });
+      //   } else if (element.isPointLight) {
+      //     element.castShadow = true;
+      //   }
+      // }
 
       const cloak_url = "models/room_mask_test.gltf";
       const cloak = await new Promise((resolve) => {
@@ -77,11 +109,12 @@
       });
 
       //   anchor.group.add(plane);
-      const light = new THREE.HemisphereLight(0xffffff, 0xbbbbff, 1);
+      const light = new THREE.HemisphereLight(0xffffff, 0xbbbbff, 0.5);
       scene.add(light);
       gltf.scene.scale.set(0.02, 0.02, 0.02);
       //gltf.scene.rotation.set(90, 0, 0);
       gltf.scene.rotation.x = Math.PI / 2;
+      gltf.scene.rotation.y = Math.PI;
       gltf.scene.renderOrder = Infinity;
 
       anchor.group.add(gltf.scene);
@@ -89,6 +122,7 @@
       cloak.scene.scale.set(0.02, 0.02, 0.02);
       //cloak.scene.rotation.set(90, 0, 0);
       cloak.scene.rotation.x = Math.PI / 2;
+      cloak.scene.rotation.y = Math.PI;
       anchor.group.add(cloak.scene);
 
       model_2.scene.scale.set(0.02, 0.02, 0.02);
@@ -98,7 +132,7 @@
         await mindarThree.start();
         renderer.setAnimationLoop(() => {
           var delta = clock.getDelta();
-				  if ( mixer ) mixer.update( delta );
+          if (mixer) mixer.update(delta);
           renderer.render(scene, camera);
         });
       };
