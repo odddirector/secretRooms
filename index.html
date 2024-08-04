@@ -1,100 +1,119 @@
-<script src="https://cdn.jsdelivr.net/gh/aframevr/aframe@1c2407b26c61958baa93967b5412487cd94b290b/dist/aframe-master.min.js"></script>
-<script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar-nft.js"></script>
+<html>
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script
+      async
+      src="https://unpkg.com/es-module-shims@1.8.0/dist/es-module-shims.js"
+    ></script>
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+          "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/",
+          "mindar-image-three": "https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-three.prod.js"
+        }
+      }
+    </script>
+    <script type="module">
+      import * as THREE from "three";
+      import { MindARThree } from "mindar-image-three";
+      import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+      const mindarThree = new MindARThree({
+        container: document.querySelector("#container"),
+        imageTargetSrc: "markers/starbucks_2.mind",
+      });
+      const { renderer, scene, camera } = mindarThree;
+      const anchor = mindarThree.addAnchor(0);
+      const geometry = new THREE.PlaneGeometry(1, 0.55);
+      const material = new THREE.MeshBasicMaterial({
+        color: 0x00ffff,
+        transparent: true,
+        opacity: 0.5,
+      });
+      const plane = new THREE.Mesh(geometry, material);
 
-<script>
-  AFRAME.registerComponent("cloak", {
-    init: function () {
-      // make sure the model is loaded first
-      this.el.addEventListener("model-loaded", (e) => {
-        let mesh = this.el.getObject3D("mesh"); // grab the mesh
-        if (mesh === undefined) return; // return if no mesh :(
-        mesh.traverse(function (node) {
-          // traverse through and apply settings
-          if (node.isMesh && node.material) {
-            // make sure the element can be a cloak
-            node.material.colorWrite = false;
-            node.material.needsUpdate = true;
-          }
+      const url = "models/room_test.gltf";
+      const gltf = await new Promise((resolve) => {
+        const loader = new GLTFLoader();
+        loader.load(url, (gltf) => {
+          resolve(gltf);
         });
       });
-    },
-  });
-</script>
 
-<style>
-  .arjs-loader {
-    height: 100%;
-    width: 100%;
-    position: absolute;
-    top: 0;
-    left: 0;
-    background-color: rgba(0, 0, 0, 0.8);
-    z-index: 9999;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-  }
+      const cloak_url = "models/room_mask_test.gltf";
+      const cloak = await new Promise((resolve) => {
+        const loader = new GLTFLoader();
+        loader.load(cloak_url, (cloak) => {
+          resolve(cloak);
+        });
+      });
 
-  .arjs-loader div {
-    text-align: center;
-    font-size: 1.25em;
-    color: white;
-  }
-</style>
+      console.log(cloak);
+      let mesh = cloak.scene.children[0];
+      mesh.traverse(function (node) {
+        // traverse through and apply settings
+        if (node.isMesh && node.material) {
+          // make sure the element can be a cloak
+          node.material.colorWrite = false;
+          node.material.needsUpdate = true;
+        }
+      });
 
-<body style="margin: 0px; overflow: hidden">
-  <!-- minimal loader shown until image descriptors are loaded -->
-  <div class="arjs-loader">
-    <div>Loading, please wait...</div>
-  </div>
-  <a-scene
-    vr-mode-ui="enabled: false;"
-    renderer="logarithmicDepthBuffer: true;"
-    embedded
-    arjs="trackingMethod: best; sourceType: webcam;debugUIEnabled: false;"
-  >
-    <!-- we use cors proxy to avoid cross-origin problems -->
+      //   anchor.group.add(plane);
+      const light = new THREE.HemisphereLight(0xffffff, 0xbbbbff, 1);
+      scene.add(light);
+      gltf.scene.scale.set(0.02, 0.02, 0.02);
+      //gltf.scene.rotation.set(90, 0, 0);
+      gltf.scene.rotation.x = Math.PI / 2;
+      gltf.scene.renderOrder = Infinity;
 
-    <!--
-      ⚠️⚠️⚠️
-      https://arjs-cors-proxy.herokuapp.com/ is now offline, Heroku has dismissed all his free plans from November 2022.
-      You need to host your own proxy and use it instead. The proxy is based on CORS Anywhere (see https://github.com/Rob--W/cors-anywhere).
-      ⚠️⚠️⚠️
-    -->
-
-    <a-nft
-      type="nft"
-      url="markers/starbucks"
-      smooth="true"
-      smoothCount="10"
-      smoothTolerance=".01"
-      smoothThreshold="5"
-      size="1 1"
-    >
-      <!-- <a-entity gltf-model="models/room_mask_test.gltf" 
-        scale="10 10 10" 
-        cloak>
-      </a-entity> -->
-      <a-entity
-        gltf-model="models/room_test.gltf"
-        scale="10 10 10"
-      >
-      <!-- <a-entity
-        gltf-model="models/room_test.gltf"
-        scale="10 10 10"
-        position="30 -60 -180"
-      > -->
-      </a-entity>
-    </a-nft>
-    <a-entity camera></a-entity>
-  </a-scene>
-</body>
+      anchor.group.add(gltf.scene);
 
 
-<!-- <a-entity
-        gltf-model="models/test_flipped.gltf"
-        scale="100 100 100"
-        position="0 0 0"
-        position="10 10 -30"
-        rotation="-90 0 0"
-      > -->
+      cloak.scene.scale.set(0.02, 0.02, 0.02);
+      //cloak.scene.rotation.set(90, 0, 0);
+      cloak.scene.rotation.x = Math.PI / 2;
+      anchor.group.add(cloak.scene);
+
+      const start = async () => {
+        await mindarThree.start();
+        renderer.setAnimationLoop(() => {
+          renderer.render(scene, camera);
+        });
+      };
+
+      const startButton = document.querySelector("#startButton");
+      startButton.addEventListener("click", () => {
+        start();
+      });
+      stopButton.addEventListener("click", () => {
+        mindarThree.stop();
+        mindarThree.renderer.setAnimationLoop(null);
+      });
+    </script>
+    <style>
+      body {
+        margin: 0;
+      }
+      #container {
+        width: 100vw;
+        height: 100vh;
+        position: relative;
+        overflow: hidden;
+      }
+      #control {
+        position: fixed;
+        top: 0;
+        left: 0;
+        z-index: 2;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="control">
+      <button id="startButton">Start</button>
+      <button id="stopButton">Stop</button>
+    </div>
+    <div id="container"></div>
+  </body>
+</html>
