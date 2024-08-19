@@ -1,3 +1,9 @@
+<!-- 
+  https://medium.com/@jonsamp/how-to-set-up-https-on-localhost-for-macos-b597bcf935ee 
+
+  to run the https on localhost: 
+  sudo http-server --ssl --cert ~/.localhost-ssl/localhost.crt --key ~/.localhost-ssl/localhost.key 
+-->
 <html>
   <head>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -24,10 +30,12 @@
       const mindarThree = new MindARThree({
         container: document.querySelector("#container"),
         imageTargetSrc: "markers/starbucks_multi.mind",
+        filterMinCF: 0.0005, /* smooth movements */
+        filterBeta: 0.005, /* smooth movements */
       });
       const { renderer, scene, camera } = mindarThree;
 
-      renderer.shadowMap.enabled = true;
+      //renderer.shadowMap.enabled = true;
       //renderer.shadowMap.type = THREE.PCFSoftShadowMap; // default THREE.PCFShadowMap
 
       let clock = new THREE.Clock();
@@ -35,61 +43,52 @@
 
       const anchor_2 = mindarThree.addAnchor(1);
 
-      const geometry = new THREE.PlaneGeometry(1, 0.55);
-      const material = new THREE.MeshBasicMaterial({
-        color: 0x00ffff,
-        transparent: true,
-        opacity: 0.5,
-      });
-      const plane = new THREE.Mesh(geometry, material);
-
-      const url = "models/room_test_lights_2.gltf";
+      const url = "models/super_small_8.gltf";
+      const model_bytes = 174592382;
       const gltf = await new Promise((resolve) => {
         const loader = new GLTFLoader();
-        loader.load(url, (gltf) => {
-          resolve(gltf);
-        });
+        loader.load(
+          url,
+          (gltf) => {
+            resolve(gltf);
+          },
+          function (xhr) {
+            console.clear();
+            console.log((xhr.loaded / model_bytes) * 100 + "% loaded");
+          },
+          function (e) {
+            console.error(e);
+          }
+        );
       });
 
       gltf.scene.traverse(function (child) {
+        child.renderOrder = Infinity;
         if (child.isMesh) {
-          child.castShadow = true;
-          child.receiveShadow = true;
+          // child.castShadow = true;
+          // child.receiveShadow = true;
         } else if (child.isPointLight) {
-          child.castShadow = true;
-          child.receiveShadow = false;
-          // child.visible = true;
-          child.shadow.mapSize.width = 528;
-          child.shadow.mapSize.height = 528;
-          child.shadow.normalBias = 0.1;
-          child.shadow.bias = 0.00002;
-          child.intensity = 100000;
+          child.intensity = 1000000;
+          // child.castShadow = true;
+          // child.receiveShadow = false;
+          // // child.visible = true;
+          // child.shadow.mapSize.width = 528;
+          // child.shadow.mapSize.height = 528;
+          // child.shadow.normalBias = 0.1;
+          // child.shadow.bias = 0.00002;
+          // child.intensity = 100000;
         }
       });
 
       const mixer = new THREE.AnimationMixer(gltf.scene);
       console.log(gltf);
-      let action = mixer.clipAction(gltf.animations[0]);
-      action.play();
 
-      // for (let index = 0; index < gltf.scene.children.length; index++) {
-      //   const element = gltf.scene.children[index];
-      //   if (element.isMesh) {
-      //     element.castShadow = true;
-      //     element.receiveShadow = true;
-      //     // element.traverse(function (node) {
-      //     //   // traverse through and apply settings
-      //     //   if (node.isMesh) {
-      //     //     node.castShadow = true;
-      //     //     node.receiveShadow = true;
-      //     //   }
-      //     // });
-      //   } else if (element.isPointLight) {
-      //     element.castShadow = true;
-      //   }
-      // }
+      //animations
+      // let action = mixer.clipAction(gltf.animations[0]);
+      // action.play();
 
-      const cloak_url = "models/room_mask_test.gltf";
+      // ========== cloak
+      const cloak_url = "models/super_small_cloak_2.gltf";
       const cloak = await new Promise((resolve) => {
         const loader = new GLTFLoader();
         loader.load(cloak_url, (cloak) => {
@@ -116,19 +115,23 @@
       });
 
       //   anchor.group.add(plane);
-      const light = new THREE.HemisphereLight(0xffffff, 0xbbbbff, 0.2);
+      const light = new THREE.HemisphereLight(0xffffff, 0xbbbbff, 0.4);
       scene.add(light);
-      gltf.scene.scale.set(0.02, 0.02, 0.02);
+      console.log(gltf);
+      gltf.scene.scale.set(0.3, 0.3, 0.3);
       //gltf.scene.rotation.set(90, 0, 0);
       gltf.scene.rotation.x = Math.PI / 2;
+      gltf.scene.rotation.z = Math.PI / 2;
       gltf.scene.rotation.y = Math.PI;
+      
       gltf.scene.renderOrder = Infinity;
 
       anchor.group.add(gltf.scene);
 
-      cloak.scene.scale.set(0.02, 0.02, 0.02);
-      //cloak.scene.rotation.set(90, 0, 0);
+      // ========== cloak
+      cloak.scene.scale.set(0.3, 0.3, 0.3);
       cloak.scene.rotation.x = Math.PI / 2;
+      cloak.scene.rotation.z = Math.PI / 2;
       cloak.scene.rotation.y = Math.PI;
       anchor.group.add(cloak.scene);
 
