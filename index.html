@@ -7,9 +7,7 @@
 <html>
   <head>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <script
-      async
-      src="https://unpkg.com/es-module-shims@1.8.0/dist/es-module-shims.js"
+    <script async src="https://unpkg.com/es-module-shims@1.8.0/dist/es-module-shims.js"
     ></script>
     <script type="importmap">
       {
@@ -29,9 +27,9 @@
 
       const mindarThree = new MindARThree({
         container: document.querySelector("#container"),
-        imageTargetSrc: "markers/starbucks_multi.mind",
-        filterMinCF: 0.0005, /* smooth movements */
-        filterBeta: 0.005, /* smooth movements */
+        imageTargetSrc: "markers/ikea_real_2.mind",
+        filterMinCF: 0.0001, /* smooth movements */
+        filterBeta: 0.001, /* smooth movements */
       });
       const { renderer, scene, camera } = mindarThree;
 
@@ -43,7 +41,8 @@
 
       const anchor_2 = mindarThree.addAnchor(1);
 
-      const url = "models/super_small_8.gltf";
+      // const url = "models/super_small_17.gltf";
+      const url = "models/super_small_17_2.gltf";
       const model_bytes = 174592382;
       const gltf = await new Promise((resolve) => {
         const loader = new GLTFLoader();
@@ -68,7 +67,7 @@
           // child.castShadow = true;
           // child.receiveShadow = true;
         } else if (child.isPointLight) {
-          child.intensity = 1000000;
+          child.intensity = 20000000;
           // child.castShadow = true;
           // child.receiveShadow = false;
           // // child.visible = true;
@@ -88,7 +87,8 @@
       // action.play();
 
       // ========== cloak
-      const cloak_url = "models/super_small_cloak_2.gltf";
+      // const cloak_url = "models/cloak_square_4.gltf";
+      const cloak_url = "models/cloak_square_4.gltf";
       const cloak = await new Promise((resolve) => {
         const loader = new GLTFLoader();
         loader.load(cloak_url, (cloak) => {
@@ -114,25 +114,32 @@
         });
       });
 
+      let scale = 1.9;
+
       //   anchor.group.add(plane);
       const light = new THREE.HemisphereLight(0xffffff, 0xbbbbff, 0.4);
       scene.add(light);
       console.log(gltf);
-      gltf.scene.scale.set(0.3, 0.3, 0.3);
+      gltf.scene.scale.set(scale, scale, scale);
       //gltf.scene.rotation.set(90, 0, 0);
       gltf.scene.rotation.x = Math.PI / 2;
       gltf.scene.rotation.z = Math.PI / 2;
       gltf.scene.rotation.y = Math.PI;
+      //gltf.scene.position.set(2, 0, 0);
+      
+      // gltf.scene.translateX = -5;
       
       gltf.scene.renderOrder = Infinity;
 
       anchor.group.add(gltf.scene);
 
       // ========== cloak
-      cloak.scene.scale.set(0.3, 0.3, 0.3);
+      cloak.scene.scale.set(scale, scale, scale);
       cloak.scene.rotation.x = Math.PI / 2;
       cloak.scene.rotation.z = Math.PI / 2;
       cloak.scene.rotation.y = Math.PI;
+      //cloak.scene.translateZ = -100;
+      //cloak.scene.translateX = -5;
       anchor.group.add(cloak.scene);
 
       model_2.scene.scale.set(0.02, 0.02, 0.02);
