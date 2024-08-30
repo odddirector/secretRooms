@@ -1,203 +1,170 @@
-<!-- 
-  https://medium.com/@jonsamp/how-to-set-up-https-on-localhost-for-macos-b597bcf935ee 
-
-  to run the https on localhost: 
-  sudo http-server --ssl --cert ~/.localhost-ssl/localhost.crt --key ~/.localhost-ssl/localhost.key 
--->
-<html>
-  <head>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <script async src="https://unpkg.com/es-module-shims@1.8.0/dist/es-module-shims.js"
-    ></script>
-    <script type="importmap">
-      {
-        "imports": {
-          "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
-          "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/",
-          "mindar-image-three": "https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-three.prod.js"
-        }
-      }
-    </script>
-    <script type="module">
-      import * as THREE from "three";
-      import { MindARThree } from "mindar-image-three";
-      import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
-
-      //Create a WebGLRenderer and turn on shadows in the renderer
-
-      const mindarThree = new MindARThree({
-        container: document.querySelector("#container"),
-        imageTargetSrc: "markers/all_ikea_targets.mind",
-        filterMinCF: 0.0001, /* smooth movements */
-        filterBeta: 0.001, /* smooth movements */
-      });
-      const { renderer, scene, camera } = mindarThree;
-
-      //renderer.shadowMap.enabled = true;
-      //renderer.shadowMap.type = THREE.PCFSoftShadowMap; // default THREE.PCFShadowMap
-
-      let clock = new THREE.Clock();
-      //const anchor = mindarThree.addAnchor(0);
-
-      const anchors = [];
-      for (let index = 0; index < 20; index++) {
-        anchors.push(mindarThree.addAnchor(index));
-      }
-      console.log("anchors = ");
-      console.log(anchors);
-
-      //const anchor_2 = mindarThree.addAnchor(1);
-
-      const url = "models/super_small_17.gltf";
-      const model_bytes = 174592382;
-      const gltf = await new Promise((resolve) => {
-        const loader = new GLTFLoader();
-        loader.load(
-          url,
-          (gltf) => {
-            resolve(gltf);
-          },
-          function (xhr) {
-            console.clear();
-            console.log((xhr.loaded / model_bytes) * 100 + "% loaded");
-          },
-          function (e) {
-            console.error(e);
-          }
-        );
-      });
-
-      gltf.scene.traverse(function (child) {
-        child.renderOrder = Infinity;
-        if (child.isMesh) {
-          // child.castShadow = true;
-          // child.receiveShadow = true;
-        } else if (child.isPointLight) {
-          child.intensity = 20000000;
-          // child.castShadow = true;
-          // child.receiveShadow = false;
-          // // child.visible = true;
-          // child.shadow.mapSize.width = 528;
-          // child.shadow.mapSize.height = 528;
-          // child.shadow.normalBias = 0.1;
-          // child.shadow.bias = 0.00002;
-          // child.intensity = 100000;
-        }
-      });
-
-      const mixer = new THREE.AnimationMixer(gltf.scene);
-      console.log(gltf);
-
-      //animations
-      // let action = mixer.clipAction(gltf.animations[0]);
-      // action.play();
-
-      // ========== cloak
-      // const cloak_url = "models/cloak_square_4.gltf";
-      const cloak_url = "models/cloak_square_4.gltf";
-      const cloak = await new Promise((resolve) => {
-        const loader = new GLTFLoader();
-        loader.load(cloak_url, (cloak) => {
-          resolve(cloak);
-        });
-      });
-
-      let mesh = cloak.scene.children[0];
-      mesh.traverse(function (node) {
-        // traverse through and apply settings
-        if (node.isMesh && node.material) {
-          // make sure the element can be a cloak
-          node.material.colorWrite = false;
-          node.material.needsUpdate = true;
-        }
-      });
-
-      const model_2_url = "models/model_2.gltf";
-      const model_2 = await new Promise((resolve) => {
-        const loader = new GLTFLoader();
-        loader.load(model_2_url, (model_2) => {
-          resolve(model_2);
-        });
-      });
-
-      let scale = 1.9;
-
-      //   anchor.group.add(plane);
-      const light = new THREE.HemisphereLight(0xffffff, 0xbbbbff, 0.4);
-      scene.add(light);
-      console.log(gltf);
-      gltf.scene.scale.set(scale, scale, scale);
-      gltf.scene.rotation.x = Math.PI / 2;
-      gltf.scene.rotation.z = Math.PI / 2;
-      gltf.scene.rotation.y = Math.PI;
-
-      
-      gltf.scene.renderOrder = Infinity;
-
-      //anchor.group.add(gltf.scene);
-
-      //anchors[0].group.add(gltf.scene);
-
-      // ========== cloak
-      cloak.scene.scale.set(scale, scale, scale);
-      cloak.scene.rotation.x = Math.PI / 2;
-      cloak.scene.rotation.z = Math.PI / 2;
-      cloak.scene.rotation.y = Math.PI;
-      //cloak.scene.translateZ = -100;
-      //cloak.scene.translateX = -5;
-      //anchor.group.add(cloak.scene);
-
-      model_2.scene.scale.set(0.02, 0.02, 0.02);
-      //anchor_2.group.add(model_2.scene);
-
-      for (let index = 0; index < 20; index++) {
-        const gltfClone = gltf.scene.clone();
-        const cloakClone = cloak.scene.clone();
-        anchors[index].group.add(gltfClone);
-        anchors[index].group.add(cloakClone);
-      }
-
-      const start = async () => {
-        await mindarThree.start();
-        renderer.setAnimationLoop(() => {
-          var delta = clock.getDelta();
-          if (mixer) mixer.update(delta);
-          renderer.render(scene, camera);
-        });
-      };
-
-      const startButton = document.querySelector("#startButton");
-      startButton.addEventListener("click", () => {
-        start();
-      });
-      stopButton.addEventListener("click", () => {
-        mindarThree.stop();
-        mindarThree.renderer.setAnimationLoop(null);
-      });
-    </script>
+    <title>Find a Secret Room</title>
     <style>
-      body {
-        margin: 0;
-      }
-      #container {
-        width: 100vw;
-        height: 100vh;
-        position: relative;
-        overflow: hidden;
-      }
-      #control {
-        position: fixed;
-        top: 0;
-        left: 0;
-        z-index: 2;
-      }
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #f4f4f4;
+            color: #333;
+            margin: 0;
+            padding: 0;
+        }
+        h1 {
+            margin-top: 50px;
+            font-size: 36px;
+        }
+        h2 {
+            font-size: 24px;
+            margin-bottom: 30px;
+            margin-left: auto;
+            margin-right: auto;
+            max-width: 900px;
+            font-weight: normal;
+            line-height: 35px;
+        }
+        a {
+            color: #0073e6;
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+        .image-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 10px;
+            padding: 20px;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        .image-grid img {
+            width: 100%;
+            height: auto;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .image-grid img:hover {
+            transform: scale(1.05);
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.8);
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-content {
+            position: relative;
+            max-width: 90%;
+            max-height: 90%;
+        }
+        .modal-content img {
+            width: 100%;
+            height: auto;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        .close {
+            position: absolute;
+            top: 10px;
+            right: 25px;
+            color: #fff;
+            font-size: 40px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        #footer-link {
+            text-align: center;
+            font-size: 13px;
+            font-family: Arial, sans-serif;
+            margin-top: 70px;
+            margin-bottom: 50px;
+        }
+        #footer-link a {
+            color: #fff;
+            text-decoration: none;
+            background-color: #ffbf00;
+            padding: 5px 10px;
+            border-radius: 5px;
+            transition: background-color 0.3s ease;
+        }
+        #footer-link a:hover {
+            background-color: #333;
+        }
     </style>
-  </head>
-  <body>
-    <div id="control">
-      <button id="startButton">Start</button>
-      <button id="stopButton">Stop</button>
+</head>
+<body>
+    <h1>Find a Secret Room</h1>
+    <h2>There is a secret room in your Ikea. Go there and look for one of these pictures. When you <a href="scan.html">scan it with this site</a>, you'll reveal the horrible truth. Good luck.</h2>
+
+    <div class="image-grid">
+        <img src="images/global.jpg" alt="Clue Image 1" />
+        <img src="images/global_1.jpg" alt="Clue Image 2" />
+        <img src="images/global_2.jpg" alt="Clue Image 3" />
+        <img src="images/global_3.jpg" alt="Clue Image 4" />
+        <img src="images/global_4.jpg" alt="Clue Image 5" />
+        <img src="images/global_5.jpg" alt="Clue Image 6" />
+        <img src="images/global_6.jpg" alt="Clue Image 7" />
+        <img src="images/global_7.jpg" alt="Clue Image 8" />
+        <img src="images/global_8.jpg" alt="Clue Image 9" />
+        <img src="images/global_9.jpg" alt="Clue Image 10" />
+        <img src="images/global_10.jpg" alt="Clue Image 11" />
+        <img src="images/global_11.jpg" alt="Clue Image 12" />
+        <img src="images/global_12.jpg" alt="Clue Image 13" />
+        <img src="images/global_13.jpg" alt="Clue Image 14" />
+        <img src="images/global_14.jpg" alt="Clue Image 15" />
+        <img src="images/global_15.jpg" alt="Clue Image 16" />
+        <img src="images/global_16.jpg" alt="Clue Image 17" />
+        <img src="images/global_17.jpg" alt="Clue Image 18" />
+        <img src="images/global_18.jpg" alt="Clue Image 19" />
+        <img src="images/global_19.jpg" alt="Clue Image 20" />
     </div>
-    <div id="container"></div>
-  </body>
+
+    <div class="modal" id="imageModal">
+        <span class="close" id="closeModal">&times;</span>
+        <div class="modal-content">
+            <img src="" id="modalImage" alt="Zoomed Image">
+        </div>
+    </div>
+
+    <div id="footer-link">
+        <a href="https://www.youtube.com/@odddirector" target="_blank">so odd...</a>
+    </div>
+
+    <script>
+        const images = document.querySelectorAll('.image-grid img');
+        const modal = document.getElementById('imageModal');
+        const modalImg = document.getElementById('modalImage');
+        const closeModal = document.getElementById('closeModal');
+
+        images.forEach(image => {
+            image.addEventListener('click', () => {
+                modal.style.display = 'flex';
+                modalImg.src = image.src;
+            });
+        });
+
+        closeModal.addEventListener('click', () => {
+            modal.style.display = 'none';
+        });
+
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                modal.style.display = 'none';
+            }
+        });
+    </script>
+</body>
 </html>
